@@ -179,37 +179,133 @@ def sort_metadata(metadata_list, sort_field, reverse=False):
         reverse=reverse
     )
 
-def metadata_to_markdown(metadata_list):
-    """Генерирует Markdown отчет."""
+def metadata_to_html(metadata_list):
+    """Генерирует HTML-представление списка метаданных в отчет."""
     css = """<style>
-    .book { margin-bottom: 40px; overflow: auto; }
-    .cover { 
-        float: left; width: 240px; height: 356px; margin-right: 20px;
-        border: 1px solid #ddd; border-radius: 4px; object-fit: contain;
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
     }
-    .no-cover { 
-        width: 240px; height: 356px; display: flex; align-items: center;
-        justify-content: center; background: #f5f5f5; color: #777;
-        border: 1px dashed #ccc; font-style: italic;
+    
+    h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 30px;
+        font-size: 2.2em;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
     }
-    .meta { margin-left: 260px; }
-    .title { margin-top: 0; color: #333; font-size: 1.4em; }
+    
+    .book {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .book:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .cover {
+        float: left;
+        width: 180px;
+        height: 270px;
+        margin-right: 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        object-fit: cover;
+        background-color: #f5f5f5;
+    }
+    
+    .no-cover {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eaeaea;
+        color: #777;
+        border: 1px dashed #aaa;
+        font-style: italic;
+        font-size: 0.9em;
+    }
+    
+    .meta {
+        padding: 20px;
+        margin-left: 200px;
+    }
+    
+    .title {
+        margin-top: 0;
+        color: #2c3e50;
+        font-size: 1.4em;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    
+    .meta p {
+        margin: 8px 0;
+    }
+    
+    strong {
+        color: #2c3e50;
+    }
+    
+    .clear {
+        clear: both;
+    }
+    
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 768px) {
+        .cover {
+            float: none;
+            display: block;
+            margin: 0 auto 15px;
+        }
+        
+        .meta {
+            margin-left: 0;
+        }
+        
+        .title {
+            text-align: center;
+        }
+    }
     </style>\n\n"""
 
-    markdown = css + "# Каталог книг\n\n"
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Каталог книг</title>
+        {css}
+    </head>
+    
+    <body>
+    <h1>Каталог книг</h1>\n\n
+    """
 
     for meta in metadata_list:
-        markdown += '<div class="book">\n'
+        html += '<div class="book">\n'
 
         # Обложка
         if meta['Обложка']:
             cover_rel_path = os.path.join(COVERS_DIR, os.path.basename(meta['Обложка']))
-            markdown += f'<img src="{cover_rel_path}" class="cover">\n'
+            html += f'<img src="{cover_rel_path}" class="cover">\n'
         else:
-            markdown += '<div class="cover no-cover">Нет обложки</div>\n'
+            html += '<div class="cover no-cover">Нет обложки</div>\n'
 
         # Метаданные
-        markdown += (
+        html += (
             '<div class="meta">\n'
             f'<h2 class="title">{meta["Название"]}</h2>\n'
             f'<p><strong>Автор:</strong> {meta["Автор"]}</p>\n'
@@ -222,7 +318,8 @@ def metadata_to_markdown(metadata_list):
             '</div>\n\n'
         )
 
-    return markdown
+    html += '</body>\n</html>\n'
+    return html
 
 def main():
     parser = argparse.ArgumentParser(
@@ -230,8 +327,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument('input', help='Файл или директория с книгами')
-    parser.add_argument('-o', '--output', default='books_metadata.md',
-                        help='Выходной Markdown файл')
+    parser.add_argument('-o', '--output', default='books_metadata.html',
+                        help='Выходной HTML файл')
 
     # Параметры сортировки
     parser.add_argument('--sort', choices=['Автор', 'Серия', 'Жанр', 'Название'],
@@ -283,7 +380,7 @@ def main():
 
         # Сохраняем результат
         with open(args.output, 'w', encoding='utf-8') as f:
-            f.write(metadata_to_markdown(sorted_metadata))
+            f.write(metadata_to_html(sorted_metadata))
 
         print(f"Обработано: {len(metadata)} книг | "
               f"После фильтрации: {len(filtered_metadata)} | "
